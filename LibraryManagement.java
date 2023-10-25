@@ -1,14 +1,16 @@
 import javax.swing.*;
-import javax.swing.GroupLayout.Group;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.PrintWriter;
+
 
 public class LibraryManagement {
     private JFrame frame;
@@ -52,12 +54,12 @@ public class LibraryManagement {
         // });
 
        
-        //  delButton.addActionListener(new ActionListener() {
-        //     @Override
-        //     public void actionPerformed(ActionEvent e) {
-               
-        //     }
-        // });
+         delButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              deleteBook(); 
+            }
+        });
         
        
        
@@ -67,6 +69,80 @@ public class LibraryManagement {
 
 
 
+    }
+    private void deleteFromFile(String name){
+  try {
+        File inputFile = new File("data.txt");
+        File tempFile = new File("temp.txt");
+
+        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+        String currentLine;
+        while ((currentLine = reader.readLine()) != null) {
+            if (currentLine.contains(name)) {
+                continue;
+            }
+            writer.write(currentLine + "\n");
+        }
+        writer.close();
+        reader.close();
+
+      
+        tempFile.renameTo(inputFile);
+         } catch (Exception e) {
+        e.printStackTrace();
+    }
+    }
+    private void deleteFromTable(String name){
+       
+        int count = tableModel.getRowCount();
+        for (int i=0; i<count; i++){
+           String value = tableModel.getValueAt(i, 0).toString();;
+            if (value.equalsIgnoreCase(name)){
+                tableModel.removeRow(i);
+                break;
+                }
+                }
+                
+    }
+    private void deleteBook(){
+        JDialog delBook = new JDialog(frame, "Delete Book");
+        delBook.setLayout(new GridLayout(2, 1));
+        JLabel label1 = new JLabel("Enter Name of the book to Delete: ");
+        JTextField textField = new JTextField();
+     
+    
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
+     
+       
+       cancelButton.addActionListener(new ActionListener() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+           delBook.dispose();
+        }
+        
+       });
+        okButton.addActionListener(new ActionListener(){
+            @Override
+            public void actionPerformed(ActionEvent arg0){
+                String name=textField.getText();
+                deleteFromFile(name);
+                deleteFromTable(name);
+             
+                 delBook.dispose();
+   
+          }});
+        delBook.add(label1);
+        delBook.add(textField);
+        delBook.add(okButton, BorderLayout.SOUTH);
+        delBook.add(cancelButton, BorderLayout.SOUTH);
+         delBook.setSize(300, 150);
+        delBook.setVisible(true);
+                                
+    
     }
     private void addBook() {
         JDialog addBook = new JDialog(frame, "Add Book");
@@ -127,6 +203,9 @@ public class LibraryManagement {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    private void editBooks(){
+
     }
 
     public static void main(String[] args) {     
