@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Vector;
 
 
 public class LibraryManagement {
@@ -54,6 +55,12 @@ public class LibraryManagement {
         // });
 
        
+         ediButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              editBooks(); 
+            }
+        });
          delButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -164,9 +171,19 @@ public class LibraryManagement {
                 String title = titleF.getText();
                 String year = yearF.getText();
                 String author = authorF.getText();
-                tableModel.addRow(new Object[]{title, author, year, "Read"});
+                JButton readButton = new JButton("Read");
+       
+                tableModel.addRow(new Object[]{title, author, year, readButton});
                 addBook.dispose();
                 saveBooks(title, year, author);
+            }
+            
+        });
+         readButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Handle the button click action here
+                JOptionPane.showMessageDialog(frame, "Read button clicked!");
             }
         });
 
@@ -190,7 +207,7 @@ public class LibraryManagement {
                     String title = bookInfo[0];
                     String author = bookInfo[1];
                     String year = bookInfo[2];
-                    tableModel.addRow(new Object[]{title, author, year, "Read"});
+                    tableModel.addRow(new Object[]{title, author, year, readButton});
                 }
             }
         } catch (IOException e) {
@@ -204,9 +221,93 @@ public class LibraryManagement {
             e.printStackTrace();
         }
     }
-    private void editBooks(){
+    private void editBookinFile(String name, String newLine){
+         try {
+        File inputFile = new File("data.txt");
+        File tempFile = new File("temp.txt");
 
+        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+        BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+        String currentLine;
+        while ((currentLine = reader.readLine()) != null) {
+            if (currentLine.contains(name)) {
+                 writer.write(newLine + "\n");
+                 continue;
+            }
+            writer.write(currentLine + "\n");
+        }
+        writer.close();
+        reader.close();
+
+      
+        tempFile.renameTo(inputFile);
+         } catch (Exception e) {
+        e.printStackTrace();
     }
+}
+         private void editBookinTable(String name, String[] newLine){
+        
+        int count = tableModel.getRowCount();
+        for (int i=0; i<count; i++){
+           String value = tableModel.getValueAt(i, 0).toString();;
+            if (value.equalsIgnoreCase(name)){
+                tableModel.removeRow(i);
+               tableModel.insertRow(i,new Object[]{newLine[0], newLine[1], newLine[2], readButton});
+                break;
+                }
+                }
+                
+    }    
+
+    
+    private void editBooks(){
+        JDialog editBook = new JDialog(frame, "Edit Book");
+        editBook.setLayout(new GridLayout(5, 2));
+       JLabel oldtitle = new JLabel("Title of the book you want to edit:");
+        JTextField otitle = new JTextField();
+
+        JLabel title = new JLabel("New Title:");
+        JTextField titleF = new JTextField();
+
+        JLabel year = new JLabel("New Year:");
+        JTextField yearF = new JTextField();
+
+        JLabel author = new JLabel("New Author:");
+        JTextField authorF = new JTextField();
+
+        JButton doneButton = new JButton("Done");
+        doneButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               String name=otitle.getText();
+               String newTitle= titleF.getText();
+                String newYear= yearF.getText();
+                 String newAuthor= authorF.getText();
+               String newLine= newTitle+", "+newAuthor+", "+newYear;
+               editBookinFile(name, newLine);
+               String[] arr={newTitle,newAuthor,newYear};
+               editBookinTable(name, arr);
+               editBook.dispose();
+               
+            }
+            
+        });
+         editBook.add(oldtitle);
+        editBook.add(otitle);
+        editBook.add(title);
+        editBook.add(titleF);
+        editBook.add(year);
+        editBook.add(yearF);
+        editBook.add(author);
+        editBook.add(authorF);
+        editBook.add(doneButton);
+
+        editBook.setSize(300, 150);
+        editBook.setVisible(true);
+    }
+    
 
     public static void main(String[] args) {     
                 LibraryManagement app = new LibraryManagement();
