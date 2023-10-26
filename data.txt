@@ -1,2 +1,3 @@
-SRE, pressman, 1990
-SCD, author 2, 1997
+SRE, pressman, 1990, 1
+SCD,    author 2,    1997, 7
+Matilda,  abc,  2000, 19

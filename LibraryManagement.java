@@ -1,26 +1,33 @@
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Vector;
+
 
 
 public class LibraryManagement {
     private JFrame frame;
     private JTable table;
     private DefaultTableModel tableModel;
-    private JButton readButton, addButton, ediButton, delButton;
+    private JButton readButton, addButton, ediButton, delButton, popButton;
+    int popcount;
     
 
     public LibraryManagement() {
+        popcount=0;
         frame = new JFrame("Book Reader");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
@@ -28,17 +35,48 @@ public class LibraryManagement {
        addButton = new JButton("Add Item");
        delButton = new JButton("Delete Item");
        ediButton = new JButton("Edit Item");
+      readButton = new JButton("Read");
+       popButton = new JButton("View Popularity");
        buttonPanel.add(addButton);
        buttonPanel.add(delButton);
        buttonPanel.add(ediButton);
+       buttonPanel.add(readButton);
+       buttonPanel.add(popButton);
        frame.add(buttonPanel, BorderLayout.SOUTH);
-        readButton = new JButton("Read");
+        
       
-        tableModel = new DefaultTableModel(new Object[]{"Title", "Author", "Year", "Read"}, 0);
+        tableModel = new DefaultTableModel(new Object[]{"Title", "Author", "Year", "Popularity"}, 0);
         table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
         frame.add(scrollPane, BorderLayout.CENTER);
+          
+        table.setSelectionBackground(Color.BLUE);
+        table.setSelectionForeground(Color.WHITE);
+       table.addMouseListener(new MouseListener() {
 
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            int row = table.rowAtPoint(e.getPoint());
+            table.getSelectionModel().setSelectionInterval(row, row);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          table.clearSelection();
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {}
+
+        @Override
+        public void mousePressed(MouseEvent e) {}
+        
+        @Override
+        public void mouseReleased(MouseEvent e) {}
+       
+       });
+
+           
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -46,14 +84,44 @@ public class LibraryManagement {
             }
         });
 
-       
-        // readButton.addActionListener(new ActionListener() {
-        //     @Override
-        //     public void actionPerformed(ActionEvent e) {
-               
-        //     }
-        // });
 
+       ListSelectionModel selectionModel = table.getSelectionModel();
+        selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        selectionModel.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                    int selectedRow = table.getSelectedRow();
+                    if (selectedRow != -1) {
+                   
+                     
+                         readButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                   String title = (String) tableModel.getValueAt(selectedRow, 0);
+                     String c=(String) tableModel.getValueAt(selectedRow, 3);
+                    c=c.trim();
+                     int count= Integer.parseInt(c);
+                      count++;
+                      tableModel.setValueAt(Integer.toString(count), selectedRow, 3);
+                      String newLine= title+", "+(String) tableModel.getValueAt(selectedRow, 1)+", "+(String) tableModel.getValueAt(selectedRow, 2)+", "+Integer.toString(count);
+                      editBookinFile(title, newLine);
+                      readBox();
+                
+               
+                }
+                
+                });
+                }
+                }
+            }
+        });
+
+        frame.add(scrollPane, BorderLayout.CENTER);
+       
+              
+        
+           
        
          ediButton.addActionListener(new ActionListener() {
             @Override
@@ -76,6 +144,35 @@ public class LibraryManagement {
 
 
 
+    }
+    private void readBox(){
+                 frame = new JFrame("Book Reader");
+                frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+                frame.setLayout(new BorderLayout());
+                String Text="Software engineering is a field that focuses on the development and maintenance of software systems.\n It combines principles of computer science, mathematics, and engineering to create efficient and reliable software solutions.      In software engineering, professionals follow a systematic approach to software development.\n This involves analyzing requirements, designing the system architecture, coding the software, and testing it to ensure its functionality and quality. Software engineers also work on enhancing existing software systems by fixing bugs and adding new features.   One of the key aspects of software engineering is the use of different software development methodologies, such as Agile and Waterfall.\n These methodologies help in managing the software development process and ensuring timely delivery of the product.Software engineers use programming languages like Java, C++, and Python to write code for software applications. They also work with different tools and technologies to build and deploy software systems. Overall, software engineering plays a crucial role in the advancement of technology and the development of innovative software solutions for various industries. It requires a strong understanding of computer science concepts, problem-solving skills, and the ability to work in a team to deliver high-quality software products.\n";
+                JTextArea text=new JTextArea(Text, 40, 20);
+                frame.add(text);
+                JScrollPane scrollPane = new JScrollPane(text);
+                scrollPane.setPreferredSize(new Dimension(500,180));
+                frame.getContentPane().add(scrollPane);
+                frame.pack();
+                frame.setVisible(true);
+                frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        int choice = JOptionPane.showConfirmDialog(frame,
+                                "Do you want to exit reading the book?",
+                                "Confirmation",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+        
+                        if (choice == JOptionPane.YES_OPTION) {
+                            frame.dispose(); 
+                        }
+                       
+                    }
+                });
     }
     private void deleteFromFile(String name){
   try {
@@ -171,21 +268,15 @@ public class LibraryManagement {
                 String title = titleF.getText();
                 String year = yearF.getText();
                 String author = authorF.getText();
-                JButton readButton = new JButton("Read");
+               
        
-                tableModel.addRow(new Object[]{title, author, year, readButton});
+                tableModel.addRow(new Object[]{title, author, year, 0});
                 addBook.dispose();
-                saveBooks(title, year, author);
+                saveBooks(title, year, author, 0);
             }
             
         });
-         readButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Handle the button click action here
-                JOptionPane.showMessageDialog(frame, "Read button clicked!");
-            }
-        });
+        
 
         addBook.add(title);
         addBook.add(titleF);
@@ -203,20 +294,21 @@ public class LibraryManagement {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] bookInfo = line.split(",");
-                if (bookInfo.length == 3) {
+                if (bookInfo.length == 4) {
                     String title = bookInfo[0];
                     String author = bookInfo[1];
                     String year = bookInfo[2];
-                    tableModel.addRow(new Object[]{title, author, year, readButton});
+                    String popcount= bookInfo[3];
+                    tableModel.addRow(new Object[]{title, author, year, popcount});
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    private void saveBooks(String title, String year, String author) {
+    private void saveBooks(String title, String year, String author, int count) {
         try (FileWriter writer = new FileWriter("data.txt", true)) {
-            writer.write("\n"+ title + "," + author + "," + year);
+            writer.write("\n"+ title + "," + author + "," + year + "," + count);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -253,7 +345,7 @@ public class LibraryManagement {
            String value = tableModel.getValueAt(i, 0).toString();;
             if (value.equalsIgnoreCase(name)){
                 tableModel.removeRow(i);
-               tableModel.insertRow(i,new Object[]{newLine[0], newLine[1], newLine[2], readButton});
+               tableModel.insertRow(i,new Object[]{newLine[0], newLine[1], newLine[2], newLine[3]});
                 break;
                 }
                 }
@@ -275,6 +367,8 @@ public class LibraryManagement {
 
         JLabel author = new JLabel("New Author:");
         JTextField authorF = new JTextField();
+          JLabel pop = new JLabel("New popularity Count:");
+        JTextField popC = new JTextField();
 
         JButton doneButton = new JButton("Done");
         doneButton.addActionListener(new ActionListener() {
@@ -285,16 +379,17 @@ public class LibraryManagement {
                String newTitle= titleF.getText();
                 String newYear= yearF.getText();
                  String newAuthor= authorF.getText();
-               String newLine= newTitle+", "+newAuthor+", "+newYear;
+                 String newCount=popC.getText();
+               String newLine= newTitle+", "+newAuthor+", "+newYear+", "+newCount;
                editBookinFile(name, newLine);
-               String[] arr={newTitle,newAuthor,newYear};
+               String[] arr={newTitle,newAuthor,newYear,newCount};
                editBookinTable(name, arr);
                editBook.dispose();
                
             }
             
         });
-         editBook.add(oldtitle);
+        editBook.add(oldtitle);
         editBook.add(otitle);
         editBook.add(title);
         editBook.add(titleF);
@@ -302,6 +397,8 @@ public class LibraryManagement {
         editBook.add(yearF);
         editBook.add(author);
         editBook.add(authorF);
+        editBook.add(pop);
+        editBook.add(popC);
         editBook.add(doneButton);
 
         editBook.setSize(300, 150);
