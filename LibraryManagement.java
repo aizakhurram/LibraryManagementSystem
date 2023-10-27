@@ -9,13 +9,18 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.general.DefaultPieDataset;
+import org.jfree.data.general.PieDataset;
 
 
 public class LibraryManagement {
@@ -23,11 +28,9 @@ public class LibraryManagement {
     private JTable table;
     private DefaultTableModel tableModel;
     private JButton readButton, addButton, ediButton, delButton, popButton;
-    int popcount;
-    
-
+   
     public LibraryManagement() {
-        popcount=0;
+       
         frame = new JFrame("Book Reader");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
@@ -95,7 +98,7 @@ public class LibraryManagement {
                     if (selectedRow != -1) {
                    
                      
-                         readButton.addActionListener(new ActionListener() {
+            readButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                    String title = (String) tableModel.getValueAt(selectedRow, 0);
@@ -135,6 +138,14 @@ public class LibraryManagement {
               deleteBook(); 
             }
         });
+        popButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              createAndShowGraph();
+            }
+            
+        });
         
        
        
@@ -142,8 +153,47 @@ public class LibraryManagement {
         frame.setSize(600, 400);
         frame.setVisible(true);
 
+        
 
-
+    }
+    private void createAndShowGraph() {
+        JFrame frame = new JFrame("Pie Chart");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    
+      
+        PieDataset dataset = createDataset("data.txt");
+        JFreeChart chart = createChart(dataset);
+    
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(400, 300));
+    
+       
+        frame.add(chartPanel);
+    
+        frame.pack();
+        frame.setVisible(true);
+    }
+    
+    private static PieDataset createDataset(String filename) {
+        DefaultPieDataset dataset = new DefaultPieDataset();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(", ");
+                if (parts.length == 4) {
+                    String bookTitle = parts[0];
+                    int bookCount = Integer.parseInt(parts[3]);
+                    dataset.setValue(bookTitle, bookCount);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return dataset;
+    }
+    
+    private static JFreeChart createChart(PieDataset dataset) {
+        return ChartFactory.createPieChart("Book Popularity Pie Chart", dataset, true, true, false);
     }
     private void readBox(){
                  frame = new JFrame("Book Reader");
