@@ -1,3 +1,4 @@
-SRE, pressman,  1990, 2
-SCD, author 2, 1997, 7
-Matilda, abc, 2000, 23
+Harry Potter, JK Rowling, 1998, 31
+SCD, Pressman, 1997, 32
+Matilda, abc, 2000, 55
+

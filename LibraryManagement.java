@@ -9,7 +9,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,14 +23,21 @@ import org.jfree.data.general.PieDataset;
 
 
 public class LibraryManagement {
-    private JFrame frame;
+    private JFrame frame, frame2;
     private JTable table;
     private DefaultTableModel tableModel;
     private JButton readButton, addButton, ediButton, delButton, popButton;
+    int selectedRow;
+    int copiedrow=-1;
+         JLabel label1;
    
     public LibraryManagement() {
-       
-        frame = new JFrame("Book Reader");
+        selectedRow=-1;
+        frame2= new JFrame("Book reader");
+        frame = new JFrame("Library");
+        label1= new JLabel();
+        frame2.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame2.setLayout(new BorderLayout());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
          JPanel buttonPanel = new JPanel();
@@ -53,7 +59,7 @@ public class LibraryManagement {
         JScrollPane scrollPane = new JScrollPane(table);
         frame.add(scrollPane, BorderLayout.CENTER);
           
-        table.setSelectionBackground(Color.BLUE);
+        table.setSelectionBackground(Color.PINK);
         table.setSelectionForeground(Color.WHITE);
        table.addMouseListener(new MouseListener() {
 
@@ -87,39 +93,53 @@ public class LibraryManagement {
             }
         });
 
+ListSelectionModel selectionModel = table.getSelectionModel();
+selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+selectionModel.addListSelectionListener(new ListSelectionListener() {
+     
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+            selectedRow = table.getSelectedRow();
+    
+            if (selectionModel.isSelectedIndex(selectedRow)) {
 
-       ListSelectionModel selectionModel = table.getSelectionModel();
-        selectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        selectionModel.addListSelectionListener(new ListSelectionListener() {
+                  copiedrow=selectedRow;
+            }
+
+        }
+    }
+});
+
+readButton.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (copiedrow != -1) {
+         
+            readBox(copiedrow);
+            
+            copiedrow= -1; 
+            
+        }
+    }
+});
+         frame2.addWindowListener(new WindowAdapter() {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    int selectedRow = table.getSelectedRow();
-                    if (selectedRow != -1) {
-                   
-                     
-            readButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                   String title = (String) tableModel.getValueAt(selectedRow, 0);
-                     String c=(String) tableModel.getValueAt(selectedRow, 3);
-                    c=c.trim();
-                     int count= Integer.parseInt(c);
-                      count++;
-                      tableModel.setValueAt(Integer.toString(count), selectedRow, 3);
-                      String newLine= title+", "+(String) tableModel.getValueAt(selectedRow, 1)+", "+(String) tableModel.getValueAt(selectedRow, 2)+", "+Integer.toString(count);
-                      editBookinFile(title, newLine);
-                      readBox();
-                
-               
-                }
-                
-                });
-                }
+            public void windowClosing(WindowEvent e) {
+                int choice = JOptionPane.showConfirmDialog(frame2,
+                        "Do you want to exit reading the book?",
+                        "Confirmation",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+        
+                if (choice == JOptionPane.YES_OPTION) {
+                    frame2.dispose();
+                     label1.setText(null);
+                  
                 }
             }
         });
-
+        
         frame.add(scrollPane, BorderLayout.CENTER);
        
               
@@ -158,8 +178,22 @@ public class LibraryManagement {
     }
     private void createAndShowGraph() {
         JFrame frame = new JFrame("Pie Chart");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    
+         frame.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosing(WindowEvent e) {
+                        int choice = JOptionPane.showConfirmDialog(frame,
+                                "Do you want to exit?",
+                                "Confirmation",
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.QUESTION_MESSAGE);
+        
+                        if (choice == JOptionPane.YES_OPTION) {
+                            frame.dispose(); 
+                           
+                        }
+                       
+                    }
+                });
       
         PieDataset dataset = createDataset("data.txt");
         JFreeChart chart = createChart(dataset);
@@ -195,34 +229,35 @@ public class LibraryManagement {
     private static JFreeChart createChart(PieDataset dataset) {
         return ChartFactory.createPieChart("Book Popularity Pie Chart", dataset, true, true, false);
     }
-    private void readBox(){
-                 frame = new JFrame("Book Reader");
-                frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    private void readBox(int row){
+              String title = (String)tableModel.getValueAt(row, 0);
+             // System.out.println(title);
+                String Text="\n\nSoftware engineering is a field that focuses on the development and maintenance of software systems.\n It combines principles of computer science, mathematics, and engineering to create efficient and reliable software solutions.\n\nIn software engineering, professionals follow a systematic approach to software development.\n This involves analyzing requirements, designing the system architecture, coding the software, and testing it to ensure its functionality and quality. Software engineers also work on enhancing existing software systems by fixing bugs and adding new features.   One of the key aspects of software engineering is the use of different software development methodologies, such as Agile and Waterfall.\n\n These methodologies help in managing the software development process and ensuring timely delivery of the product.Software engineers use programming languages like Java, C++, and Python to write code for software applications. They also work with different tools and technologies to build and deploy software systems. Overall, software engineering plays a crucial role in the advancement of technology and the development of innovative software solutions for various industries. It requires a strong understanding of computer science concepts, problem-solving skills, and the ability to work in a team to deliver high-quality software products.\n\n";
+                     String c=(String)tableModel.getValueAt(row, 3);
+                     String author=(String) tableModel.getValueAt(row, 1);
+                      String year=(String) tableModel.getValueAt(row, 2);
+                     author=author.trim();
+                     year=year.trim();
+                     c=c.trim();
+                     int count= Integer.parseInt(c);
+                      count++;
+                      tableModel.setValueAt(Integer.toString(count), row, 3);
+                      String newLine= title+", "+author+", "+year+", "+Integer.toString(count);
+                      editBookinFile(title, newLine);
 
-                frame.setLayout(new BorderLayout());
-                String Text="Software engineering is a field that focuses on the development and maintenance of software systems.\n It combines principles of computer science, mathematics, and engineering to create efficient and reliable software solutions.      In software engineering, professionals follow a systematic approach to software development.\n This involves analyzing requirements, designing the system architecture, coding the software, and testing it to ensure its functionality and quality. Software engineers also work on enhancing existing software systems by fixing bugs and adding new features.   One of the key aspects of software engineering is the use of different software development methodologies, such as Agile and Waterfall.\n These methodologies help in managing the software development process and ensuring timely delivery of the product.Software engineers use programming languages like Java, C++, and Python to write code for software applications. They also work with different tools and technologies to build and deploy software systems. Overall, software engineering plays a crucial role in the advancement of technology and the development of innovative software solutions for various industries. It requires a strong understanding of computer science concepts, problem-solving skills, and the ability to work in a team to deliver high-quality software products.\n";
+                label1.setText("Book: "+title);
                 JTextArea text=new JTextArea(Text, 40, 20);
-                frame.add(text);
+                frame2.add(label1,BorderLayout.NORTH);
+                frame2.add(text);
                 JScrollPane scrollPane = new JScrollPane(text);
                 scrollPane.setPreferredSize(new Dimension(500,180));
-                frame.getContentPane().add(scrollPane);
-                frame.pack();
-                frame.setVisible(true);
-                frame.addWindowListener(new WindowAdapter() {
-                    @Override
-                    public void windowClosing(WindowEvent e) {
-                        int choice = JOptionPane.showConfirmDialog(frame,
-                                "Do you want to exit reading the book?",
-                                "Confirmation",
-                                JOptionPane.YES_NO_OPTION,
-                                JOptionPane.QUESTION_MESSAGE);
-        
-                        if (choice == JOptionPane.YES_OPTION) {
-                            frame.dispose(); 
-                        }
+                frame2.getContentPane().add(scrollPane);
+                frame2.pack();
+                frame2.setVisible(true);
+                
+              
                        
-                    }
-                });
+              
     }
     private void deleteFromFile(String name){
   try {
@@ -405,7 +440,7 @@ public class LibraryManagement {
     
     private void editBooks(){
         JDialog editBook = new JDialog(frame, "Edit Book");
-        editBook.setLayout(new GridLayout(5, 2));
+        editBook.setLayout(new GridLayout(6, 2));
        JLabel oldtitle = new JLabel("Title of the book you want to edit:");
         JTextField otitle = new JTextField();
 
